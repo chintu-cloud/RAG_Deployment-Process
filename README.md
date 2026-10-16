@@ -2,11 +2,19 @@
 
 # ⚡ Amazon Bedrock + OpenSearch RAG
 
-\<p align="center"\> \<img src="https://img.shields.io/badge/AI-Generative%20AI-00F5FF?style=for-the-badge&logo=openai&logoColor=black" alt="Generative AI"/\> \<img src="https://img.shields.io/badge/AWS-Amazon%20Bedrock-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="Amazon Bedrock"/\> \<img src="https://img.shields.io/badge/Embeddings-Amazon%20Titan-BD00FF?style=for-the-badge" alt="Titan Embeddings"/\> \<img src="https://img.shields.io/badge/Vector%20Search-OpenSearch-00D4FF?style=for-the-badge" alt="OpenSearch"/\> \<img src="https://img.shields.io/badge/Language-Python-00FF9C?style=for-the-badge&logo=python&logoColor=black" alt="Python"/\> \</p\>
+<p align="center">
+<img src="https://img.shields.io/badge/AI-Generative%20AI-00F5FF?style=for-the-badge&logo=openai&logoColor=black" alt="Generative AI"/>
+<img src="https://img.shields.io/badge/AWS-Amazon%20Bedrock-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white" alt="Amazon Bedrock"/>
+<img src="https://img.shields.io/badge/Embeddings-Amazon%20Titan-BD00FF?style=for-the-badge" alt="Titan Embeddings"/>
+<img src="https://img.shields.io/badge/Vector%20Search-OpenSearch-00D4FF?style=for-the-badge" alt="OpenSearch"/>
+<img src="https://img.shields.io/badge/Language-Python-00FF9C?style=for-the-badge&logo=python&logoColor=black" alt="Python"/>
+</p>
 
-\<p align="center"\> \<b\>⚡ RETRIEVE • AUGMENT • GENERATE ⚡\</b\> \<br/\> \<i\>A Complete Beginner-Friendly Guide to Building RAG Applications on AWS\</i\> \</p\>
-
----
+<p align="center">
+<b>⚡ RETRIEVE • AUGMENT • GENERATE ⚡</b>
+<br/>
+<i>A Complete Beginner-Friendly Guide to Building RAG Applications on AWS</i>
+</p>
 
 ## 🌌 Project Overview
 
