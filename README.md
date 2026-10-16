@@ -37,80 +37,62 @@ The retrieved information is then passed to the LLM as context.
 ### ⚡ Basic RAG Architecture
 
 ```
-                 USER QUESTION
-                       |
-                       v
-              +------------------+
-              | Python App       |
-              +------------------+
-                       |
-                       v
-              +------------------+
-              | Titan Embeddings |
-              +------------------+
-                       |
-                       v
-                  QUERY VECTOR
-                       |
-                       v
-              +------------------+
-              | Amazon           |
-              | OpenSearch       |
-              +------------------+
-                       |
-                       v
-               TOP-K TEXT CHUNKS
-                       |
-                       v
-              +------------------+
-              | Question +       |
-              | Retrieved Context|
-              +------------------+
-                       |
-                       v
-              +------------------+
-              | Bedrock LLM      |
-              +------------------+
-                       |
-                       v
-                  FINAL ANSWER
+                    ┌─────────────────────┐
+                    │       User          │
+                    │ "What is Amazon S3?"│
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │  Your Application   │
+                    │   Python / API      │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Amazon Bedrock    │
+                    │ Titan Embeddings    │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    Query Vector     │
+                    │ [0.12,-0.34,0.78...]│
+                    │    1024 dimensions  │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    OpenSearch       │
+                    │  Vector Search      │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Top K Similar Chunks│
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Prompt + Context  │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Amazon Bedrock    │
+                    │        LLM          │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    Final Answer     │
+                    └─────────────────────┘
+
+            
 ```
 
 ---
 
-## 📑 Table of Contents
-
-1. What Is RAG?
-2. High-Level Architecture
-3. Why Do We Call Bedrock Twice?
-4. Two Main Phases of RAG
-5. Example Documents
-6. Generate Embeddings
-7. Store Vectors in OpenSearch
-8. User Asks a Question
-9. Convert the Question into a Vector
-10. Perform Vector Search
-11. Understand Similarity Scores
-12. Retrieve Original Text
-13. Build the RAG Prompt
-14. Generate the Final Answer
-15. Complete End-to-End Architecture
-16. Why Do We Need Embeddings?
-17. Why Do We Need OpenSearch?
-18. Why Do We Need an LLM?
-19. Embedding vs Generation
-20. Example: PDF Documentation
-21. What Is Stored in OpenSearch?
-22. What Is Top-K?
-23. Vector vs Text
-24. Suggested Project Structure
-25. Important RAG Concepts
-26. Interview Questions
-27. Key Takeaways
-28. One-Line Interview Explanation
-29. Official Documentation
-
----
 
 ## 🧠 1. What Is RAG?
 
