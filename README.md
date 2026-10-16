@@ -18,145 +18,175 @@
 
 ## 🌌 Project Overview
 
-**Retrieval-Augmented Generation (RAG)** is an AI architecture that combines information retrieval with Large Language Model (LLM) generation.
+This project explains a simple **Retrieval-Augmented Generation (RAG)** architecture using:
 
-This project explains how to build a RAG pipeline using:
+- 🟠 **Amazon Bedrock** — Provides access to embedding models and large language models.
+- 🟣 **Amazon Titan Embeddings** — Converts text into numerical vectors.
+- 🔵 **Amazon OpenSearch** — Stores vectors and performs similarity searches.
+- 🐍 **Python** — Connects the different components.
+- 🧠 **RAG** — Retrieves relevant information before generating an answer.
 
-| Technology | Role |
-| --- | --- |
-| 🟠 Amazon Bedrock | Hosts embedding and text-generation models |
-| 🟣 Amazon Titan Embeddings | Converts text into numerical vectors |
-| 🔵 Amazon OpenSearch | Stores embeddings and retrieves similar documents |
-| 🐍 Python | Connects all components |
-| 🧠 RAG | Grounds generated answers in retrieved information |
+### 🎯 Main Objective
 
-### 🎯 Project Goal
+Build an application that can answer questions using information from our own documents.
 
-Build an application that answers user questions using information retrieved from your own documents instead of relying only on an LLM's trained knowledge.
+Instead of asking an LLM to answer a question only from its trained knowledge, the application first searches a knowledge base and retrieves relevant text.
 
-### ⚡ Core Concept
+The retrieved information is then passed to the LLM as context.
+
+### ⚡ Basic RAG Architecture
 
 ```
-          USER QUESTION
-                |
-                v
-       +------------------+
-       | Python App       |
-       +------------------+
-                |
-                v
-       +------------------+
-       | Titan Embeddings |
-       +------------------+
-                |
-                v
-          QUERY VECTOR
-                |
-                v
-       +------------------+
-       | OpenSearch       |
-       | Vector Search    |
-       +------------------+
-                |
-                v
-        TOP-K TEXT CHUNKS
-                |
-                v
-       +------------------+
-       | Question+Context |
-       +------------------+
-                |
-                v
-       +------------------+
-       | Bedrock LLM      |
-       +------------------+
-                |
-                v
-          FINAL ANSWER
+                 USER QUESTION
+                       |
+                       v
+              +------------------+
+              | Python App       |
+              +------------------+
+                       |
+                       v
+              +------------------+
+              | Titan Embeddings |
+              +------------------+
+                       |
+                       v
+                  QUERY VECTOR
+                       |
+                       v
+              +------------------+
+              | Amazon           |
+              | OpenSearch       |
+              +------------------+
+                       |
+                       v
+               TOP-K TEXT CHUNKS
+                       |
+                       v
+              +------------------+
+              | Question +       |
+              | Retrieved Context|
+              +------------------+
+                       |
+                       v
+              +------------------+
+              | Bedrock LLM      |
+              +------------------+
+                       |
+                       v
+                  FINAL ANSWER
 ```
 
 ---
 
 ## 📑 Table of Contents
 
-- 01 — What Is RAG?
-- 02 — System Architecture
-- 03 — Two Bedrock Operations
-- 04 — Data Ingestion Pipeline
-- 05 — Document Chunking
-- 06 — Generate Embeddings
-- 07 — Store Vectors in OpenSearch
-- 08 — Query Processing
-- 09 — Vector Similarity Search
-- 10 — Build the RAG Prompt
-- 11 — Generate the Final Answer
-- 12 — Complete Architecture Diagram
-- 13 — Example OpenSearch Document
-- 14 — What Is Top-K?
-- 15 — Why Do We Need Each Component?
-- 16 — Suggested Project Structure
-- 17 — Important Concepts
-- 18 — Interview Questions
-- 19 — Future Improvements
-- 20 — Official Documentation
+1. What Is RAG?
+2. High-Level Architecture
+3. Why Do We Call Bedrock Twice?
+4. Two Main Phases of RAG
+5. Example Documents
+6. Generate Embeddings
+7. Store Vectors in OpenSearch
+8. User Asks a Question
+9. Convert the Question into a Vector
+10. Perform Vector Search
+11. Understand Similarity Scores
+12. Retrieve Original Text
+13. Build the RAG Prompt
+14. Generate the Final Answer
+15. Complete End-to-End Architecture
+16. Why Do We Need Embeddings?
+17. Why Do We Need OpenSearch?
+18. Why Do We Need an LLM?
+19. Embedding vs Generation
+20. Example: PDF Documentation
+21. What Is Stored in OpenSearch?
+22. What Is Top-K?
+23. Vector vs Text
+24. Suggested Project Structure
+25. Important RAG Concepts
+26. Interview Questions
+27. Key Takeaways
+28. One-Line Interview Explanation
+29. Official Documentation
 
 ---
 
-## 🧠 01 — What Is RAG?
+## 🧠 1. What Is RAG?
 
-**RAG = Retrieval-Augmented Generation**
+RAG stands for:
 
-RAG combines two major operations:
+> **Retrieval-Augmented Generation**
+
+It combines two important operations:
 
 - 🔍 **Retrieval:** Find relevant information from a knowledge base.
-- ⚡ **Generation:** Use an LLM to generate an answer from the retrieved information.
+- ✨ **Generation:** Use an LLM to generate an answer using the retrieved information.
 
-### 💬 Example Scenario
+### 💬 Example
 
-**User asks:**
-
-> What is Amazon S3?
-
-**Retrieved context:**
+Suppose a user asks:
 
 ```
+What is Amazon S3?
+```
+
+A traditional LLM might answer using information learned during training and the instructions in the prompt.
+
+A RAG application first searches its own knowledge base.
+
+The knowledge base contains:
+
+```
+Chunk 1:
 Amazon S3 is an object storage service.
 
-S3 provides scalable storage for data.
+Chunk 2:
+Amazon S3 provides scalable storage for data.
 
+Chunk 3:
 S3 stores objects inside buckets.
 
-S3 supports multiple storage classes.
+Chunk 4:
+Amazon S3 supports multiple storage classes.
 ```
 
-**Generated answer:**
+The application retrieves relevant chunks and sends them to the LLM.
 
-> Amazon S3 is an AWS object storage service that provides scalable data storage. It stores objects inside buckets and supports multiple storage classes for different access requirements.
+The LLM generates an answer such as:
 
-### 🔥 Why RAG?
+```
+Amazon S3 is an AWS object storage service that
+provides scalable storage for data. It stores
+objects inside buckets and supports multiple
+storage classes.
+```
 
-| Traditional LLM | RAG Application |
-| --- | --- |
-| Primarily relies on learned knowledge and prompt input | Retrieves relevant external information |
-| May lack private company information | Can use indexed private documents |
-| Can produce unsupported claims | Can be instructed to ground answers in evidence |
-| May not know recent internal changes | Can retrieve updated documents after reindexing |
+### 🎯 Why Is RAG Useful?
 
-> ⚠️ RAG improves access to relevant information but does not guarantee accuracy. Poor retrieval or misleading source documents can still produce incorrect answers.
+- It can use private company documents.
+- It can retrieve information from an organization's knowledge base.
+- It can use updated documents after they have been indexed.
+- It can provide answers grounded in retrieved source material.
+- It can include source references to help users verify answers.
+
+**Important:** RAG does not guarantee that every answer is correct. Retrieval quality, document quality, prompt design, and LLM behavior all affect the result.
 
 ---
 
-## 🏗️ 02 — System Architecture
+## 🏗️ 2. High-Level Architecture
+
+The architecture contains an ingestion pipeline and a query pipeline.
 
 ```
 flowchart TD
     U["👤 User Question"] --> APP["🐍 Python Application"]
-    APP --> EMB["🟣 Amazon Titan Embeddings"]
+    APP --> EMB["🟣 Titan Embeddings"]
     EMB --> QV["🔢 Query Vector"]
-    QV --> OS["🔵 Amazon OpenSearch"]
-    OS --> CH["📚 Top-K Relevant Chunks"]
-    CH --> CTX["📝 Question + Context"]
-    CTX --> LLM["🟠 Amazon Bedrock LLM"]
+    QV --> OS[("🔵 Amazon OpenSearch")]
+    OS --> TOP["📚 Top-K Relevant Chunks"]
+    TOP --> PROMPT["📝 Question + Context"]
+    PROMPT --> LLM["🟠 Bedrock LLM"]
     LLM --> ANS["✅ Final Answer"]
 
     style U fill:#111827,stroke:#00F5FF,color:#FFFFFF
@@ -164,8 +194,8 @@ flowchart TD
     style EMB fill:#111827,stroke:#BD00FF,color:#FFFFFF
     style QV fill:#111827,stroke:#00D4FF,color:#FFFFFF
     style OS fill:#111827,stroke:#00D4FF,color:#FFFFFF
-    style CH fill:#111827,stroke:#00FF9C,color:#FFFFFF
-    style CTX fill:#111827,stroke:#FF9900,color:#FFFFFF
+    style TOP fill:#111827,stroke:#00FF9C,color:#FFFFFF
+    style PROMPT fill:#111827,stroke:#FF9900,color:#FFFFFF
     style LLM fill:#111827,stroke:#FF9900,color:#FFFFFF
     style ANS fill:#111827,stroke:#00FF9C,color:#FFFFFF
 ```
@@ -174,106 +204,149 @@ flowchart TD
 
 | Component | Responsibility |
 | --- | --- |
-| User | Submits a question |
-| Python application | Coordinates the pipeline |
-| Titan Embeddings | Converts the question into a vector |
-| OpenSearch | Searches the vector index |
-| Retrieved chunks | Supply relevant source information |
-| Bedrock LLM | Generates the final response |
+| Python application | Coordinates the workflow |
+| Titan Embeddings | Converts text into vectors |
+| Query vector | Represents the user's question numerically |
+| OpenSearch | Stores vectors and retrieves matching records |
+| Retrieved chunks | Provide relevant context |
+| Bedrock LLM | Generates the answer |
+| User interface | Displays the answer |
+
+### 🔥 Main Idea
+
+```
+Embedding Model = Convert text into numbers
+
+OpenSearch = Find relevant information
+
+LLM = Generate a human-readable answer
+
+RAG = Retrieve information first, then generate
+```
 
 ---
 
-## 🔄 03 — Two Bedrock Operations
+## 🔄 3. Why Do We Call Bedrock Twice?
 
 A common beginner question is:
 
-**Why do we call Bedrock twice?**
+> Why are we calling Amazon Bedrock two times?
 
-Because embeddings and generation perform different tasks.
+Because there are two different jobs.
 
-### 🟣 Operation 1: Embedding
+### 🟣 Operation 1 — Embedding
+
+The embedding model converts text into a numerical vector.
 
 ```
-TEXT
+Text
   |
   v
-TITAN EMBEDDING MODEL
+Titan Embedding Model
   |
   v
-NUMERICAL VECTOR
+Numerical Vector
 ```
 
-Used for:
-
-- Semantic search
-- Vector similarity
-- Document retrieval
-
-### 🟠 Operation 2: Generation
+Example:
 
 ```
-QUESTION + CONTEXT
+Input:
+"Amazon S3 is an object storage service."
+
+Output:
+[0.12, -0.34, 0.78, ...]
+```
+
+The vector is used for semantic retrieval.
+
+### 🟠 Operation 2 — Generation
+
+The generation model converts the question and retrieved context into an answer.
+
+```
+Question + Context
         |
         v
-    BEDROCK LLM
+    Bedrock LLM
         |
         v
-   NATURAL-LANGUAGE ANSWER
+  Natural-Language Answer
 ```
 
-Used for:
+### Important Difference
 
-- Question answering
-- Summarization
-- Text generation
+| Operation | Input | Output |
+| --- | --- | --- |
+| Embedding | Text | Numerical vector |
+| Generation | Prompt and context | Generated text |
 
-**Remember:**
-
-- Embedding model = converts text into vectors.
-- OpenSearch = finds relevant information.
-- LLM = generates an answer from the supplied context.
-
-The embedding and generation models are separate logical operations. Depending on the selected models, they may be different model IDs.
+These are separate model operations. They may use different Bedrock model IDs.
 
 ---
 
-## 📥 04 — Data Ingestion Pipeline
+## 📥 4. Two Main Phases of RAG
 
-Before a user asks questions, documents must be prepared and indexed.
+RAG has two major phases.
+
+### Phase 1 — Data Ingestion
+
+This phase prepares documents before users ask questions.
 
 ```
 flowchart TD
-    A["📄 Documents / PDFs"] --> B["Document Loader"]
+    A["📄 Documents"] --> B["Document Loader"]
     B --> C["Text Extraction"]
     C --> D["Chunking"]
     D --> E["Titan Embeddings"]
     E --> F["Document Vectors"]
-    F --> G[("OpenSearch Vector Index")]
+    F --> G[("OpenSearch Index")]
+    G --- H["Text + Vector + Metadata"]
 
     style A fill:#111827,stroke:#00D4FF,color:#FFFFFF
-    style B fill:#111827,stroke:#BD00FF,color:#FFFFFF
-    style C fill:#111827,stroke:#BD00FF,color:#FFFFFF
-    style D fill:#111827,stroke:#00F5FF,color:#FFFFFF
+    style D fill:#111827,stroke:#BD00FF,color:#FFFFFF
     style E fill:#111827,stroke:#BD00FF,color:#FFFFFF
-    style F fill:#111827,stroke:#00FF9C,color:#FFFFFF
-    style G fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style G fill:#111827,stroke:#00F5FF,color:#FFFFFF
 ```
 
-### Ingestion Steps
+Steps:
 
-1. Load documents such as PDFs, text files, or HTML.
-2. Extract the document text.
-3. Split the text into manageable chunks.
-4. Generate an embedding for each chunk.
-5. Store each chunk, vector, and metadata in OpenSearch.
+1. Load documents.
+2. Extract text.
+3. Split text into chunks.
+4. Generate an embedding for every chunk.
+5. Store the original text, vector, and metadata in OpenSearch.
 
-Once ingestion is complete, the application can retrieve relevant chunks when users ask questions.
+### Phase 2 — Query Processing
+
+This phase happens when a user asks a question.
+
+```
+flowchart TD
+    A["👤 User Question"] --> B["Titan Query Embedding"]
+    B --> C["Query Vector"]
+    C --> D["OpenSearch Vector Search"]
+    D --> E["Top-K Results"]
+    E --> F["Original Text Chunks"]
+    F --> G["Question + Context"]
+    G --> H["Bedrock LLM"]
+    H --> I["Final Answer"]
+
+    style A fill:#111827,stroke:#00F5FF,color:#FFFFFF
+    style B fill:#111827,stroke:#BD00FF,color:#FFFFFF
+    style D fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style E fill:#111827,stroke:#00FF9C,color:#FFFFFF
+    style H fill:#111827,stroke:#FF9900,color:#FFFFFF
+    style I fill:#111827,stroke:#00FF9C,color:#FFFFFF
+```
+
+**Remember:** Ingestion creates the searchable knowledge base. Query processing uses that knowledge base to answer questions.
 
 ---
 
-## ✂️ 05 — Document Chunking
+## 📄 5. Example Documents
 
-Suppose we have this source document:
+Suppose we have a document containing:
 
 ```
 Amazon S3 is an object storage service.
@@ -285,77 +358,92 @@ S3 stores objects inside buckets.
 Amazon S3 supports multiple storage classes.
 ```
 
-We split the document into smaller chunks.
+We split it into smaller chunks.
 
-### Example Chunks
-
-**Chunk 1**
+### Chunk 1
 
 ```
 Amazon S3 is an object storage service.
 ```
 
-**Chunk 2**
+### Chunk 2
 
 ```
 Amazon S3 provides scalable storage for data.
 ```
 
-**Chunk 3**
+### Chunk 3
 
 ```
 S3 stores objects inside buckets.
 ```
 
-**Chunk 4**
+### Chunk 4
 
 ```
 Amazon S3 supports multiple storage classes.
 ```
 
-### 🎯 Why Is Chunking Important?
+Each chunk is treated as an individual piece of information during indexing.
 
-- Smaller pieces can improve retrieval precision.
-- Large documents become easier to index.
-- The application can retrieve specific sections.
-- The context sent to the LLM can be controlled.
+### Why Do We Split Documents?
 
-**Important:** Chunk size, overlap, and splitting strategy affect retrieval quality. Real applications often use token limits and overlapping chunks rather than splitting only at sentence boundaries.
+- A large document may contain information about many different topics.
+- Smaller chunks can make retrieval more precise.
+- The application can retrieve only the sections relevant to a question.
+- The LLM receives a manageable amount of context.
+
+In real applications, chunking may use token limits, sentence boundaries, paragraph boundaries, and overlapping text.
 
 ---
 
-## 🔢 06 — Generate Embeddings
+## 🔢 6. Generate Embeddings
 
-Each document chunk is passed to the embedding model.
+Each chunk is sent to the embedding model.
 
 ```
-CHUNK 1
-   |
-   v
-TITAN EMBEDDINGS
-   |
-   v
-VECTOR 1
-```
+flowchart LR
+    A["Chunk 1"] --> E1["Titan Embeddings"]
+    B["Chunk 2"] --> E2["Titan Embeddings"]
+    C["Chunk 3"] --> E3["Titan Embeddings"]
+    E1 --> V1["Vector 1"]
+    E2 --> V2["Vector 2"]
+    E3 --> V3["Vector 3"]
 
-The same process repeats for all chunks.
+    style A fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style B fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style C fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style E1 fill:#111827,stroke:#BD00FF,color:#FFFFFF
+    style E2 fill:#111827,stroke:#BD00FF,color:#FFFFFF
+    style E3 fill:#111827,stroke:#BD00FF,color:#FFFFFF
+    style V1 fill:#111827,stroke:#00FF9C,color:#FFFFFF
+    style V2 fill:#111827,stroke:#00FF9C,color:#FFFFFF
+    style V3 fill:#111827,stroke:#00FF9C,color:#FFFFFF
+```
 
 ### Example Vectors
 
 ```
-Chunk 1 -> [0.12, -0.34, 0.78, ...]
-Chunk 2 -> [0.42,  0.18, -0.22, ...]
-Chunk 3 -> [-0.15, 0.81, 0.34, ...]
-Chunk 4 -> [0.52, -0.27, 0.63, ...]
+Chunk 1:
+[0.12, -0.34, 0.78, ...]
+
+Chunk 2:
+[0.42, 0.18, -0.22, ...]
+
+Chunk 3:
+[-0.15, 0.81, 0.34, ...]
+
+Chunk 4:
+[0.52, -0.27, 0.63, ...]
 ```
 
-_These values are illustrative and are not actual Titan model outputs._
+These vectors are illustrative, not actual outputs from Amazon Titan.
 
 ### 🧠 What Is an Embedding?
 
 An embedding is a numerical representation of text that captures useful semantic relationships.
 
-Texts with related meanings can have vectors that are close under the configured similarity measure.
+Texts with similar meanings can have nearby vectors according to the chosen similarity measure.
 
 For example:
 
@@ -363,141 +451,193 @@ For example:
 Query:
 "Where can I store files in AWS?"
 
-Retrieved document:
+Document:
 "Amazon S3 is an object storage service."
 ```
 
-The words are different, but their meanings are related.
+The two texts do not contain exactly the same words, but their meanings are related.
 
-> ⚠️ Vector dimensions depend on the selected embedding model and its configuration. For example, certain Titan Text Embeddings models support 1,024-dimensional vectors. Configure the OpenSearch vector field to match the actual output dimension.
+### Vector Dimensions
+
+An embedding model produces a vector with a specific number of dimensions.
+
+For example, certain Amazon Titan Text Embeddings models support 1,024-dimensional embeddings.
+
+The actual vector dimensions depend on the model and its configuration.
+
+**Important:** The embedding dimensions must match the OpenSearch vector field mapping.
 
 ---
 
-## 🗄️ 07 — Store Vectors in OpenSearch
+## 🗄️ 7. Store Vectors in OpenSearch
 
-OpenSearch stores the vector along with the original chunk text and associated metadata.
+OpenSearch stores the original text and its vector representation.
 
-### Example Index Record
+A simplified record looks like this:
 
-| Field | Description |
+```
+{
+  "text": "Amazon S3 is an object storage service.",
+  "vector": [0.12, -0.34, 0.78],
+  "source": "s3-documentation.pdf",
+  "page": 10,
+  "chunk_id": "chunk-001"
+}
+```
+
+The vector above is abbreviated for explanation. A real vector must contain the correct number of dimensions.
+
+### What Does OpenSearch Store?
+
+| Field | Purpose |
 | --- | --- |
 | `text` | Original chunk text |
-| `vector` | Embedding generated by Titan |
-| `source` | Source document |
-| `page` | Page number |
-| `chunk_id` | Unique chunk identifier |
+| `vector` | Embedding of the chunk |
+| `source` | Original document name |
+| `page` | Page or source location |
+| `chunk_id` | Unique identifier |
 
-### Conceptual Structure
+### Why Store Both Text and Vector?
 
-```
-OPEN SEARCH INDEX
-|
-+-- DOCUMENT 1
-|   +-- Original Text
-|   +-- Vector
-|   +-- Metadata
-|
-+-- DOCUMENT 2
-|   +-- Original Text
-|   +-- Vector
-|   +-- Metadata
-|
-+-- DOCUMENT 3
-    +-- Original Text
-    +-- Vector
-    +-- Metadata
-```
+The vector is used to find similar records.
 
-### Why Store the Original Text?
-
-OpenSearch finds matching records using their vector representations. The application then retrieves the original text for the LLM.
+The original text is needed to provide readable information to the LLM.
 
 ```
-QUERY VECTOR
+Query Vector
      |
      v
-OPENSEARCH SEARCH
+OpenSearch
      |
      v
-MATCHING RECORD
+Matching Record
      |
      v
-ORIGINAL TEXT CHUNK
+Original Text Chunk
      |
      v
-BEDROCK LLM
+Bedrock LLM
 ```
 
-### Key Point
-
-**The vector is used for retrieval; the original text is used as readable context.**
+OpenSearch can return the matching document fields along with the search score.
 
 ---
 
-## 💬 08 — Query Processing
+## 🙋 8. User Asks a Question
 
-Now the user asks:
+After indexing, a user asks:
+
+```
+What is Amazon S3?
+```
+
+The application receives the question.
+
+```
+User
+ |
+ | "What is Amazon S3?"
+ v
+Python Application
+```
+
+The application does not normally send the question directly to vector search as plain text when using vector-only retrieval.
+
+Instead, it first generates a compatible query embedding.
+
+---
+
+## 🔢 9. Convert the Question into a Vector
+
+The question is sent to the embedding model.
+
+```
+"What is Amazon S3?"
+        |
+        v
+Titan Embedding Model
+        |
+        v
+Query Vector
+```
+
+Conceptually:
+
+```
+[0.12, -0.34, 0.78, ...]
+```
+
+This is only an illustration. The actual query vector depends on the input and the selected model.
+
+### Document Embedding vs Query Embedding
+
+| Type | Input | Purpose |
+| --- | --- | --- |
+| Document embedding | A stored text chunk | Represents the chunk |
+| Query embedding | A user's question | Represents the search request |
+
+Both should use compatible embedding models and configurations.
+
+---
+
+## 🔍 10. Perform Vector Search
+
+The application sends the query vector to OpenSearch.
+
+OpenSearch compares the query vector with vectors stored in the index.
+
+```
+                 QUERY VECTOR
+                      |
+          +-----------+-----------+
+          |           |           |
+          v           v           v
+       Vector 1    Vector 2    Vector 3
+          |           |           |
+          +-----------+-----------+
+                      |
+                      v
+              SIMILARITY SEARCH
+                      |
+                      v
+                TOP-K RESULTS
+```
+
+The search process ranks documents using the configured vector-search method.
+
+### Example
+
+Suppose the index contains 1,000 chunks.
+
+The query is:
 
 ```
 "What is Amazon S3?"
 ```
 
-The Python application receives the question and generates its embedding.
+The application requests the most relevant results.
 
 ```
-USER QUESTION
-      |
-      v
-PYTHON APPLICATION
-      |
-      v
-TITAN EMBEDDING MODEL
-      |
-      v
-QUERY VECTOR
+1000 stored chunks
+        |
+        v
+Vector similarity search
+        |
+        v
+Top 3 results
 ```
 
-The query embedding should be generated using a compatible model and configuration with the indexed document embeddings.
-
-### Two Types of Embeddings
-
-| Embedding | Input |
-| --- | --- |
-| Document embedding | A stored document chunk |
-| Query embedding | The user's question |
-
-Both represent text as vectors so that the application can search for related content.
+The selected records are then used as context for generation.
 
 ---
 
-## 🔍 09 — Vector Similarity Search
+## 📊 11. Understand Similarity Scores
 
-The query vector is sent to OpenSearch.
+OpenSearch can return search scores with the matching records.
 
-OpenSearch searches for vectors that are similar to the query according to the configured search method.
+Example:
 
-```
-flowchart TD
-    Q["🔢 Query Vector"] --> S["OpenSearch Vector Search"]
-    S --> R1["Document Vector 1"]
-    S --> R2["Document Vector 2"]
-    S --> R3["Document Vector 3"]
-    R1 --> SCORE["Similarity / Ranking"]
-    R2 --> SCORE
-    R3 --> SCORE
-    SCORE --> TOP["🏆 Top-K Results"]
-    TOP --> TXT["📚 Original Text Chunks"]
-
-    style Q fill:#111827,stroke:#BD00FF,color:#FFFFFF
-    style S fill:#111827,stroke:#00D4FF,color:#FFFFFF
-    style SCORE fill:#111827,stroke:#FF9900,color:#FFFFFF
-    style TOP fill:#111827,stroke:#00FF9C,color:#FFFFFF
-    style TXT fill:#111827,stroke:#00F5FF,color:#FFFFFF
-```
-
-### Example Search Results
-
-| Chunk | Example Score |
+| Chunk | Illustrative Score |
 | --- | --- |
 | Chunk 7 | 0.92 |
 | Chunk 2 | 0.88 |
@@ -505,33 +645,91 @@ flowchart TD
 | Chunk 4 | 0.61 |
 | Chunk 20 | 0.42 |
 
-_These scores are illustrative, not benchmark results._
+These numbers are illustrative and do not represent actual search results.
 
-The application retrieves the most relevant records and uses their text to build the LLM context.
+### What Does a Score Mean?
 
-**Note:** The interpretation of a search score depends on the similarity metric and OpenSearch configuration. A score is not automatically a calibrated probability of correctness.
+The score helps rank results according to the configured search method.
+
+However, the meaning of the score depends on the similarity metric and OpenSearch configuration.
+
+A higher score does not automatically mean that a document has the same percentage probability of being correct.
+
+### What Happens Next?
+
+If the application requests Top-K = 3, it selects the three highest-ranked results.
+
+```
+Chunk 7  -> Selected
+Chunk 2  -> Selected
+Chunk 15 -> Selected
+
+Chunk 4  -> Not selected
+Chunk 20 -> Not selected
+```
+
+The selected chunks are passed to the next stage.
 
 ---
 
-## 📝 10 — Build the RAG Prompt
+## 📚 12. Retrieve the Original Text
 
-The application combines the user's question with the retrieved chunks.
+This is one of the most important steps in RAG.
+
+OpenSearch does not need to return only vectors or scores. It can return the matching records, including the original text stored in each record.
+
+For example:
+
+```
+Chunk 7:
+"Amazon S3 is an object storage service."
+
+Chunk 2:
+"Amazon S3 provides scalable storage for data."
+
+Chunk 15:
+"Amazon S3 supports multiple storage classes."
+```
+
+The application collects the returned text.
+
+```
+Top-K Search Results
+        |
+        v
+Original Text Chunks
+        |
+        v
+Context for the LLM
+```
+
+**Important:** The application normally sends readable text and relevant metadata to the LLM, not just the numerical vectors.
+
+---
+
+## 📝 13. Build the RAG Prompt
+
+The application combines the user question with the retrieved text.
+
+This is called **prompt augmentation**.
 
 ### Example Prompt
 
 ```
 SYSTEM INSTRUCTION:
 
-Answer the question using the supplied context.
-Do not invent unsupported facts.
-If the context does not contain the answer,
+Answer the question using the provided context.
+Do not invent facts that are not supported by
+the available information.
+
+If the answer cannot be found in the context,
 explain that the available information is insufficient.
 
 CONTEXT:
 
 Amazon S3 is an object storage service.
 
-S3 provides scalable object storage.
+Amazon S3 provides scalable storage for data.
 
 S3 supports multiple storage classes.
 
@@ -540,120 +738,425 @@ QUESTION:
 What is Amazon S3?
 ```
 
-### Why Is the Context Important?
+### What Does the Prompt Do?
 
-The context provides relevant information from the application's knowledge base.
+- Provides the LLM with relevant source information.
+- Tells the LLM what question to answer.
+- Encourages the LLM to stay grounded in the context.
+- Helps reduce unsupported answers.
 
-The LLM uses it to generate a response grounded in the retrieved content.
+A well-designed production prompt should also account for untrusted retrieved text, source attribution, and the possibility that the context does not answer the question.
 
 ---
 
-## 🤖 11 — Generate the Final Answer
+## 🤖 14. Generate the Final Answer
 
-The application sends the question and context to a compatible text-generation model through Amazon Bedrock.
+Now the second model operation happens.
+
+The application sends the question and context to a text-generation model through Amazon Bedrock.
 
 ```
-QUESTION + CONTEXT
-        |
-        v
-   BEDROCK LLM
-        |
-        v
-   FINAL RESPONSE
+Question + Retrieved Context
+             |
+             v
+      Amazon Bedrock LLM
+             |
+             v
+       Generated Answer
 ```
 
 ### Example Answer
 
-> Amazon S3 is an AWS object storage service that provides scalable storage for data. It stores objects inside buckets and supports multiple storage classes for different access requirements.
+```
+Amazon S3 is an AWS object storage service that
+provides scalable storage for data. It stores
+objects inside buckets and supports multiple
+storage classes for different access requirements.
+```
 
-The application returns the response to the user.
+The application then returns the generated answer to the user.
+
+### Important Distinction
+
+OpenSearch retrieves information.
+
+The LLM generates the response.
+
+The application connects the two components and controls how retrieved information is used.
 
 ---
 
-## 🌐 12 — Complete End-to-End Architecture
+## 🌐 15. Complete End-to-End Architecture
 
-The full RAG system contains two connected pipelines.
+The complete process combines ingestion and query processing.
 
 ```
 flowchart TB
-    subgraph ING["📥 INGESTION PIPELINE"]
-        A["Documents / PDFs"] --> B["Text Extraction"]
-        B --> C["Chunking"]
-        C --> D["Titan Embeddings"]
-        D --> E["Document Vectors"]
-        E --> F[("OpenSearch Index<br/>Text + Vector + Metadata")]
+    subgraph ING["📥 INGESTION PHASE"]
+        DOC["Documents / PDFs"] --> LOAD["Document Loader"]
+        LOAD --> SPLIT["Text Chunking"]
+        SPLIT --> EMB["Titan Embeddings"]
+        EMB --> VEC["Document Vectors"]
+        VEC --> INDEX[("OpenSearch Index")]
+        SPLIT -. "Store original text" .-> INDEX
     end
 
-    subgraph QUERY["⚡ QUERY PIPELINE"]
-        U["User Question"] --> Q["Query Embedding"]
-        Q --> V["Query Vector"]
-        V --> S["Vector Similarity Search"]
-        S --> K["Top-K Chunks"]
-        K --> P["Question + Context"]
-        U --> P
-        P --> L["Bedrock LLM"]
-        L --> OUT["Final Answer"]
+    subgraph QUERY["⚡ QUERY PHASE"]
+        USER["User Question"] --> QEMB["Titan Query Embedding"]
+        QEMB --> QV["Query Vector"]
+        QV --> SEARCH["OpenSearch Vector Search"]
+        SEARCH --> TOP["Top-K Relevant Chunks"]
+        TOP --> PROMPT["Question + Context"]
+        USER --> PROMPT
+        PROMPT --> LLM["Bedrock LLM"]
+        LLM --> ANSWER["Final Answer"]
     end
 
-    F --> S
+    INDEX --> SEARCH
 
-    style A fill:#111827,stroke:#00D4FF,color:#FFFFFF
-    style D fill:#111827,stroke:#BD00FF,color:#FFFFFF
-    style F fill:#111827,stroke:#00D4FF,color:#FFFFFF
-    style U fill:#111827,stroke:#00F5FF,color:#FFFFFF
-    style Q fill:#111827,stroke:#BD00FF,color:#FFFFFF
-    style S fill:#111827,stroke:#00D4FF,color:#FFFFFF
-    style K fill:#111827,stroke:#00FF9C,color:#FFFFFF
-    style L fill:#111827,stroke:#FF9900,color:#FFFFFF
-    style OUT fill:#111827,stroke:#00FF9C,color:#FFFFFF
+    style DOC fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style SPLIT fill:#111827,stroke:#BD00FF,color:#FFFFFF
+    style EMB fill:#111827,stroke:#BD00FF,color:#FFFFFF
+    style INDEX fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style USER fill:#111827,stroke:#00F5FF,color:#FFFFFF
+    style SEARCH fill:#111827,stroke:#00D4FF,color:#FFFFFF
+    style TOP fill:#111827,stroke:#00FF9C,color:#FFFFFF
+    style LLM fill:#111827,stroke:#FF9900,color:#FFFFFF
+    style ANSWER fill:#111827,stroke:#00FF9C,color:#FFFFFF
 ```
 
-### Complete Formula
-
-**Ingestion**
+### Ingestion Formula
 
 ```
 Document
    |
    v
-Chunk
+Load and Extract Text
    |
    v
-Embedding
+Split into Chunks
+   |
+   v
+Generate Embeddings
+   |
+   v
+Store Text + Vector + Metadata
    |
    v
 OpenSearch
 ```
 
-**Query**
+### Query Formula
 
 ```
-Question
+User Question
    |
    v
-Embedding
+Generate Query Embedding
    |
    v
-Vector Search
+Query Vector
    |
    v
-Top-K Chunks
+OpenSearch Vector Search
    |
    v
-Prompt
+Retrieve Top-K Text Chunks
+   |
+   v
+Build Prompt
    |
    v
 Bedrock LLM
    |
    v
-Answer
+Final Answer
 ```
 
 ---
 
-## 📦 13 — Example OpenSearch Document
+## 🧩 16. Why Do We Need Embeddings?
 
-A simplified indexed record might look like this:
+Traditional keyword search looks for matching terms.
+
+For example:
+
+```
+Query:
+"object storage"
+```
+
+Keyword search looks for terms such as:
+
+```
+object
+storage
+```
+
+Vector search uses embeddings to find semantically related content.
+
+Example:
+
+```
+Query:
+"Where can I store files in AWS?"
+```
+
+A related document might say:
+
+```
+"Amazon S3 is an object storage service."
+```
+
+The two sentences use different words, but they are semantically related.
+
+### Key Benefits
+
+- Semantic retrieval.
+- Better handling of paraphrased questions.
+- Retrieval based on meaning rather than only exact words.
+
+Vector search is not perfect. Exact identifiers, product codes, and rare technical terms may benefit from combining vector search with keyword search.
+
+---
+
+## 🗄️ 17. Why Do We Need OpenSearch?
+
+The embedding model generates vectors, but the application also needs a searchable store for those vectors.
+
+OpenSearch provides:
+
+- Vector storage.
+- Vector similarity search.
+- Original text storage.
+- Metadata storage.
+- Filtering and other search capabilities.
+
+### Responsibility Split
+
+```
+Amazon Bedrock Embeddings
+            |
+            v
+       Creates vectors
+
+Amazon OpenSearch
+            |
+            v
+    Stores and searches vectors
+```
+
+The application retrieves matching text and sends it to the LLM.
+
+---
+
+## 🧠 18. Why Do We Need an LLM?
+
+OpenSearch retrieves relevant documents, but retrieval alone does not usually provide the complete natural-language response expected by the user.
+
+For example, OpenSearch might return:
+
+```
+Chunk 1:
+"S3 is an object storage service."
+
+Chunk 2:
+"S3 stores objects inside buckets."
+
+Chunk 3:
+"S3 supports multiple storage classes."
+```
+
+The LLM can combine the retrieved information into a readable answer:
+
+```
+Amazon S3 is an object storage service that stores
+objects in buckets and supports multiple storage
+classes.
+```
+
+### Responsibility Split
+
+| Component | Job |
+| --- | --- |
+| Embedding model | Represents text numerically |
+| OpenSearch | Retrieves relevant records |
+| LLM | Generates the answer |
+| Application | Coordinates the workflow |
+
+---
+
+## ⚡ 19. Embedding vs Generation
+
+Embedding and generation are different operations.
+
+### Embedding
+
+```
+Text
+  |
+  v
+Embedding Model
+  |
+  v
+Vector
+```
+
+Used for:
+
+- Semantic search.
+- Similarity search.
+- Retrieval.
+
+### Generation
+
+```
+Prompt
+  |
+  v
+LLM
+  |
+  v
+Text Answer
+```
+
+Used for:
+
+- Question answering.
+- Summarization.
+- Text generation.
+- Conversational responses.
+
+### Simple Mental Model
+
+```
+Embedding = Convert text into numbers
+
+OpenSearch = Find relevant information
+
+LLM = Turn the information into an answer
+
+RAG = Retrieve first, then generate
+```
+
+---
+
+## 📄 20. Example: PDF Documentation
+
+Suppose we have an AWS documentation file:
+
+```
+aws-s3-documentation.pdf
+```
+
+### Step 1 — Load the PDF
+
+```
+PDF
+ |
+ v
+Document Loader
+ |
+ v
+Extracted Text
+```
+
+### Step 2 — Split the Text
+
+```
+Extracted Text
+      |
+      v
+   Chunking
+      |
+      +-- Chunk 1
+      +-- Chunk 2
+      +-- Chunk 3
+      +-- ...
+      +-- Chunk 100
+```
+
+### Step 3 — Generate Embeddings
+
+```
+Chunk 1   -> Embedding -> Vector 1
+Chunk 2   -> Embedding -> Vector 2
+Chunk 3   -> Embedding -> Vector 3
+...
+Chunk 100 -> Embedding -> Vector 100
+```
+
+### Step 4 — Store the Records
+
+```
+OpenSearch
+
+Chunk 1 + Vector 1 + Metadata
+Chunk 2 + Vector 2 + Metadata
+Chunk 3 + Vector 3 + Metadata
+...
+Chunk 100 + Vector 100 + Metadata
+```
+
+### Step 5 — User Asks a Question
+
+```
+"What is Amazon S3?"
+```
+
+### Step 6 — Generate the Query Vector
+
+```
+Question
+   |
+   v
+Titan Embeddings
+   |
+   v
+Query Vector
+```
+
+### Step 7 — Search OpenSearch
+
+```
+Query Vector
+     |
+     v
+Vector Similarity Search
+     |
+     v
+Top-K Results
+```
+
+### Step 8 — Build the Prompt
+
+```
+Context:
+Chunk 7
+Chunk 2
+Chunk 15
+
+Question:
+What is Amazon S3?
+```
+
+### Step 9 — Generate the Answer
+
+```
+Prompt
+  |
+  v
+Bedrock LLM
+  |
+  v
+Final Answer
+```
+
+---
+
+## 📦 21. What Is Stored in OpenSearch?
+
+A simplified OpenSearch record may look like this:
 
 ```
 {
@@ -665,41 +1168,53 @@ A simplified indexed record might look like this:
 }
 ```
 
-> ⚠️ The vector is abbreviated for readability. A real vector must contain the exact number of dimensions required by the embedding model and OpenSearch index mapping.
+The vector is abbreviated for readability. The actual vector must match the dimensions configured for the selected embedding model.
 
-### Important Fields
+### Three Important Parts
 
-- `text` — readable source content
-- `vector` — numerical embedding
-- `source` — document provenance
-- `page` — source location
-- `chunk_id` — chunk identity
+```
+TEXT
+ +
+VECTOR
+ +
+METADATA
+```
 
-The exact index mapping depends on your OpenSearch version and configuration.
+**Text** is the readable content.
+
+**Vector** is the numerical representation used for similarity search.
+
+**Metadata** provides information such as document name, page number, chunk identity, and access-control attributes.
 
 ---
 
-## 🎯 14 — What Is Top-K?
+## 🎯 22. What Is Top-K?
 
-Suppose your knowledge base contains 1,000 chunks.
+Suppose the knowledge base contains 1,000 chunks.
 
-Sending every chunk to the LLM would waste tokens and may exceed its context window.
-
-Instead, retrieve only the most relevant chunks.
+The user asks:
 
 ```
-1,000 STORED CHUNKS
-        |
-        v
+"What is Amazon S3?"
+```
+
+We usually do not want to send all 1,000 chunks to the LLM.
+
+Instead, we retrieve a smaller set of relevant chunks.
+
+```
+1,000 CHUNKS
+      |
+      v
 VECTOR SEARCH
-        |
-        v
+      |
+      v
 TOP-K = 3
-        |
-        v
-3 RETRIEVED CHUNKS
-        |
-        v
+      |
+      v
+3 RELEVANT CHUNKS
+      |
+      v
 BEDROCK LLM
 ```
 
@@ -711,68 +1226,63 @@ Chunk 2  -> 0.88
 Chunk 15 -> 0.83
 ```
 
-If `K = 3`, the application retrieves those three records.
+If K equals 3, the application selects three top-ranked records.
 
-### How Do You Choose K?
+### Why Is Top-K Important?
 
-- A small K reduces context size but may omit useful information.
-- A large K may provide more evidence but can introduce irrelevant text.
-- The best value depends on document quality, question type, context limits, and evaluation results.
+- Controls the number of retrieved chunks.
+- Helps manage prompt size and token consumption.
+- Can influence answer quality.
+- Balances retrieval coverage against irrelevant context.
+
+The best K depends on your documents and evaluation results.
 
 ---
 
-## ⚙️ 15 — Why Do We Need Each Component?
+## 🔢 23. Vector vs Text
 
-| Component | Main Purpose |
-| --- | --- |
-| 🟣 Titan Embeddings | Converts text into numerical vectors |
-| 🔵 OpenSearch | Stores vectors and searches for similar records |
-| 🟠 Bedrock LLM | Generates a natural-language answer |
-| 🐍 Python | Orchestrates the pipeline |
-| 📚 Documents | Provide source knowledge |
-| ✂️ Chunking | Divides documents into searchable pieces |
+This is a critical concept for beginners.
 
-### 🧠 The Most Important Mental Model
+A vector may look like this:
 
 ```
-EMBEDDING MODEL
-"Convert text into numbers"
-
-OPENSEARCH
-"Find relevant information"
-
-LLM
-"Generate an answer using context"
-
-RAG
-"Retrieve first, then generate"
+[0.12, -0.34, 0.78, ...]
 ```
 
-### Vector Is Not Text
+It is a numerical representation, not a readable sentence.
+
+The LLM normally needs the retrieved text to understand the relevant evidence.
+
+### Correct Flow
 
 ```
-Vector
-  |
-  v
-OpenSearch Search
-  |
-  v
+Query Vector
+     |
+     v
+OpenSearch Similarity Search
+     |
+     v
 Matching Record
-  |
-  v
+     |
+     v
 Original Text Chunk
-  |
-  v
-LLM Context
+     |
+     v
+Question + Context
+     |
+     v
+Bedrock LLM
 ```
 
-The LLM normally receives the retrieved text rather than just the embedding vector.
+### Remember
+
+**Vectors help find relevant information. Original text provides the information used for generation.**
 
 ---
 
-## 📁 16 — Suggested Project Structure
+## 📁 24. Suggested Project Structure
 
-A possible Python project layout:
+A Python implementation could use the following structure:
 
 ```
 bedrock-opensearch-rag/
@@ -802,163 +1312,265 @@ bedrock-opensearch-rag/
     +-- architecture.md
 ```
 
-### Suggested Responsibilities
+### File Responsibilities
 
 | File | Responsibility |
 | --- | --- |
-| `config.py` | Configuration management |
-| `ingestion.py` | Document loading and indexing |
-| `chunking.py` | Text splitting |
+| `config.py` | Loads application settings |
+| `ingestion.py` | Loads documents and indexes chunks |
+| `chunking.py` | Splits documents into chunks |
 | `embeddings.py` | Calls the embedding model |
-| `opensearch_client.py` | Connects to OpenSearch |
-| `retrieval.py` | Runs vector search |
-| `generation.py` | Calls the text-generation model |
+| `opensearch_client.py` | Configures the OpenSearch client |
+| `retrieval.py` | Searches for relevant chunks |
+| `generation.py` | Invokes the LLM |
 | `rag_pipeline.py` | Connects retrieval and generation |
 
-_This is a suggested layout, not a claim that a working implementation is included in this README._
+This is a suggested structure for organizing an implementation.
 
 ---
 
-## 💡 17 — Important Concepts
+## 💡 25. Important RAG Concepts
 
-### 1\. Embedding
+### 1\. Document Ingestion
 
-Converts text into a vector representation.
+Preparing source documents so they can be indexed.
 
-### 2\. Vector Database
+### 2\. Chunking
 
-Stores and retrieves vector representations. OpenSearch supports vector search alongside other search capabilities.
+Splitting long documents into smaller pieces.
 
-### 3\. Semantic Search
+### 3\. Embeddings
 
-Finds content based on semantic similarity rather than only exact keyword matches.
+Converting text into numerical representations.
 
-### 4\. Chunking
+### 4\. Vector Database
 
-Splits documents into smaller pieces for indexing and retrieval.
+Storing and retrieving vector representations. OpenSearch supports vector search alongside other search capabilities.
 
-### 5\. Top-K
+### 5\. Semantic Search
 
-Controls how many of the highest-ranked results are retrieved.
+Retrieving content according to semantic similarity.
 
-### 6\. Prompt Augmentation
+### 6\. Metadata
 
-Combines the question with retrieved source text before generation.
+Additional information about a document, such as its source, page, category, or permissions.
 
-### 7\. Grounded Generation
+### 7\. Top-K Retrieval
 
-Instructs the LLM to answer using the retrieved evidence rather than inventing unsupported details.
+Selecting the highest-ranked search results.
 
-### 8\. Hybrid Search
+### 8\. Prompt Augmentation
 
-Combines keyword search and vector search to improve retrieval for some workloads.
+Combining the user's question with retrieved context.
+
+### 9\. Grounded Generation
+
+Encouraging the LLM to answer using the supplied evidence.
+
+### 10\. Hybrid Search
+
+Combining keyword search and vector search to improve retrieval for some use cases.
+
+### 11\. Reranking
+
+Reordering retrieved candidates using another relevance-scoring step.
+
+### 12\. Evaluation
+
+Measuring whether retrieval finds relevant information and whether generated answers are accurate and supported by sources.
 
 ---
 
-## 🎤 18 — Interview Questions
+## 🎤 26. Interview Questions
 
-\<details\> \<summary\>\<b\>Q1. What is RAG?\</b\>\</summary\>
+### Q1. What is RAG?
 
-RAG stands for Retrieval-Augmented Generation. It retrieves relevant external information and provides it to an LLM as context to generate a grounded response.
+RAG stands for Retrieval-Augmented Generation. It retrieves relevant external information and provides it to an LLM as context for generating an answer.
 
-\</details\>
+### Q2. Why use Amazon Bedrock?
 
-\<details\> \<summary\>\<b\>Q2. Why use Amazon Bedrock?\</b\>\</summary\>
+Amazon Bedrock provides managed access to supported foundation models and embedding models through APIs.
 
-Amazon Bedrock provides access to supported foundation models and embedding models through managed APIs, enabling applications to build generative AI workflows without hosting the models themselves.
+### Q3. Why use Titan Embeddings?
 
-\</details\>
+Titan Embeddings converts text into vectors that can be stored and searched using vector similarity.
 
-\<details\> \<summary\>\<b\>Q3. Why use Titan Embeddings?\</b\>\</summary\>
+### Q4. Why use OpenSearch?
 
-Titan Embeddings converts text into vectors that can be indexed and searched using vector similarity.
+OpenSearch stores vectors and associated text and metadata, then retrieves relevant records using vector search and other search techniques.
 
-\</details\>
+### Q5. Why do we call Bedrock twice?
 
-\<details\> \<summary\>\<b\>Q4. Why use OpenSearch?\</b\>\</summary\>
+One operation generates embeddings for retrieval. Another invokes a text-generation model to produce the final answer.
 
-OpenSearch stores document vectors and associated text and metadata, then retrieves relevant records using vector search and other search techniques.
+### Q6. What is Top-K?
 
-\</details\>
+Top-K is the number of highest-ranked search results selected to provide context to the LLM.
 
-\<details\> \<summary\>\<b\>Q5. Why call Bedrock twice?\</b\>\</summary\>
+### Q7. Why do we store original text?
 
-One operation generates embeddings for retrieval, while another invokes a text-generation model to produce the final answer.
+The vector helps locate relevant records, while the original text supplies readable context for generation.
 
-\</details\>
+### Q8. What is the difference between keyword search and vector search?
 
-\<details\> \<summary\>\<b\>Q6. What is Top-K?\</b\>\</summary\>
+Keyword search focuses on matching terms. Vector search retrieves records based on relationships represented by embeddings. Hybrid search can combine both methods.
 
-Top-K is the number of highest-ranked retrieval results selected to provide context to the LLM.
+### Q9. Does RAG eliminate hallucinations?
 
-\</details\>
+No. RAG can improve grounding, but incorrect retrieval, incomplete context, and generation errors can still cause hallucinations.
 
-\<details\> \<summary\>\<b\>Q7. Why do we store the original text?\</b\>\</summary\>
+### Q10. How can RAG quality be improved?
 
-The vector supports similarity search, while the original text provides readable evidence for the generation prompt.
+Improve chunking, evaluate embedding models, tune retrieval parameters, use hybrid search or reranking, enforce access controls, and measure retrieval and answer quality.
 
-\</details\>
+### Q11. What happens if OpenSearch returns irrelevant chunks?
 
-\<details\> \<summary\>\<b\>Q8. What is the difference between keyword search and vector search?\</b\>\</summary\>
+The LLM may generate a weak or incorrect answer. The application can improve retrieval, adjust the number of results, use reranking, and return an uncertainty response when evidence is insufficient.
 
-Keyword search focuses on matching terms, while vector search retrieves records according to relationships represented by embeddings. Hybrid search can combine both approaches.
+### Q12. What happens if the answer is not present in the documents?
 
-\</details\>
-
-\<details\> \<summary\>\<b\>Q9. Does RAG eliminate hallucinations?\</b\>\</summary\>
-
-No. RAG can improve grounding, but incorrect retrieval, incomplete context, or poor generation can still result in hallucinations.
-
-\</details\>
-
-\<details\> \<summary\>\<b\>Q10. How can you improve RAG quality?\</b\>\</summary\>
-
-Improve chunking, evaluate embedding models, tune retrieval settings, use hybrid search or reranking, enforce access controls, and measure retrieval and answer quality.
-
-\</details\>
+The application should instruct the LLM to say that the available context does not contain sufficient information rather than inventing an answer.
 
 ### ⭐ Interview-Ready Explanation
 
-> During ingestion, I split documents into chunks, generate embeddings using Amazon Bedrock Titan Embeddings, and store the vectors along with the original text and metadata in Amazon OpenSearch. When a user asks a question, I generate an embedding for the query, perform vector similarity search to retrieve the top-K relevant chunks, and pass those chunks with the question to a Bedrock LLM to generate a context-grounded answer.
+> During ingestion, I split documents into chunks, generate embeddings using Amazon Bedrock Titan Embeddings, and store the vectors along with the original chunks and metadata in Amazon OpenSearch. When a user asks a question, I generate an embedding for the query, perform vector similarity search to retrieve the top-K relevant chunks, and pass those chunks with the question to a Bedrock LLM to generate the final grounded response.
 
 ---
 
-## 🚀 19 — Future Improvements
+## ✅ 27. Key Takeaways
 
-Potential enhancements for a production-grade RAG application:
+### 1\. Documents Are Chunked
 
-- 🔎 Hybrid keyword and vector search
-- 🎯 Reranking of retrieved chunks
-- 📚 Source citations and document references
-- ✂️ Improved chunk sizing and overlap
-- 🔐 Document-level access controls
-- 📊 Retrieval and answer-quality evaluation
-- ⚡ Caching and latency optimization
-- 🛡️ Prompt-injection defenses for retrieved documents
-- 📈 Monitoring, logging, and cost tracking
+```
+Document -> Chunks
+```
+
+### 2\. Chunks Become Vectors
+
+```
+Chunk -> Titan Embeddings -> Vector
+```
+
+### 3\. Vectors Are Stored in OpenSearch
+
+```
+Text + Vector + Metadata -> OpenSearch
+```
+
+### 4\. The User Question Also Becomes a Vector
+
+```
+Question -> Titan Embeddings -> Query Vector
+```
+
+### 5\. OpenSearch Performs Similarity Search
+
+```
+Query Vector
+     |
+     v
+Stored Vectors
+     |
+     v
+Ranking
+     |
+     v
+Top-K Results
+```
+
+### 6\. Original Text Chunks Are Retrieved
+
+```
+Search Results
+      |
+      v
+Original Text
+```
+
+### 7\. The LLM Receives the Question and Context
+
+```
+Question + Context
+        |
+        v
+    Bedrock LLM
+        |
+        v
+    Final Answer
+```
 
 ---
 
-## 📚 20 — Official Documentation
+## 🏆 28. One-Line Interview Explanation
 
-| Resource | Link |
+If someone asks:
+
+**"Explain your RAG architecture."**
+
+You can answer:
+
+> "During ingestion, I split documents into chunks, generate embeddings using Amazon Bedrock, and store the vectors with the original text and metadata in OpenSearch. During a user query, I generate an embedding for the question, retrieve the top-K relevant chunks using vector similarity search, and pass those chunks along with the question to a Bedrock LLM to generate a grounded answer."
+
+### 🔥 Final Mental Model
+
+```
+              INGESTION
+
+Document
+   |
+   v
+Chunk
+   |
+   v
+Embedding
+   |
+   v
+OpenSearch
+
+                QUERY
+
+Question
+   |
+   v
+Embedding
+   |
+   v
+Vector Search
+   |
+   v
+Top-K Chunks
+   |
+   v
+Question + Context
+   |
+   v
+Bedrock LLM
+   |
+   v
+Answer
+```
+
+**RAG = Retrieve + Augment + Generate**
+
+- 🟣 Embedding Model = Convert meaning into numbers.
+- 🔵 OpenSearch = Find similar information.
+- 🟠 LLM = Use the information to generate an answer.
+- ⚡ RAG = Find relevant information first, then generate an answer using that information.
+
+---
+
+## 📚 29. Official Documentation
+
+| Resource | Documentation |
 | --- | --- |
-| 🟠 Amazon Bedrock | [Official Documentation](<https://docs.aws.amazon.com/bedrock/>) |
-| 🟣 Titan Embeddings | [Embedding Models](<https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html>) |
-| 🔵 Amazon OpenSearch Service | [Official Documentation](<https://docs.aws.amazon.com/opensearch-service/>) |
+| 🟠 Amazon Bedrock | [AWS Bedrock User Guide](<https://docs.aws.amazon.com/bedrock/>) |
+| 🟣 Titan Embeddings | [Titan Embeddings Models](<https://docs.aws.amazon.com/bedrock/latest/userguide/titan-embedding-models.html>) |
+| 🔵 Amazon OpenSearch Service | [OpenSearch Service Documentation](<https://docs.aws.amazon.com/opensearch-service/>) |
 | 🔍 OpenSearch Vector Search | [Vector Search Documentation](<https://docs.opensearch.org/latest/vector-search/>) |
+| 🐍 Boto3 | [AWS SDK for Python](<https://boto3.amazonaws.com/v1/documentation/api/latest/index.html>) |
 | 📝 GitHub Markdown | [GitHub Flavored Markdown](<https://github.github.com/gfm/>) |
-| 📊 Mermaid Diagrams | [Mermaid Documentation](<https://mermaid.js.org/>) |
+| 📊 Mermaid | [Mermaid Documentation](<https://mermaid.js.org/>) |
 
 ---
 
-\<p align="center"\> \<b\>⚡ RETRIEVE THE KNOWLEDGE. AUGMENT THE CONTEXT. GENERATE THE ANSWER. ⚡\</b\> \<br/\>\<br/\> \<img src="https://img.shields.io/badge/BUILD-00F5FF?style=for-the-badge&labelColor=111827" alt="Build"/\> \<img src="https://img.shields.io/badge/RETRIEVE-BD00FF?style=for-the-badge&labelColor=111827" alt="Retrieve"/\> \<img src="https://img.shields.io/badge/GENERATE-00FF9C?style=for-the-badge&labelColor=111827" alt="Generate"/\> \</p\>
 
-## How to publish it on GitHub
-
-1. Open your GitHub repository.
-2. Open `README.md`, or create that file if it does not exist.
-3. Paste the complete content above and save or commit the changes.
-4. Open the repository's main page to see the rendered README.
-
-Design tip: GitHub controls the page background and sanitizes unsupported HTML/CSS. The dark/neon effect comes from the dark-styled Mermaid nodes, bright badges, and emoji accents; the rest of the README adapts to GitHub's theme.
