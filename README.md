@@ -1,3 +1,6 @@
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/f7753735-4482-4ef4-b95f-d0fb1023e95a" />
+
+
 # Amazon Bedrock + OpenSearch RAG
 
 ## 📌 Overview
